@@ -1,0 +1,33 @@
+package kade.menucore.modules;
+
+import funkin.modding.module.Module;
+
+class MenuCoreBackwardsCompat extends Module
+{
+  public function new()
+  {
+    super('MC_Data');
+  }
+
+  public var versions(get, never):Array<String>;
+  function get_versions():Array<String>
+  {
+    return [for (menu in getMenus()) menu.getName()];
+  }
+
+  function getMenus():Array<BaseMenu>
+  {
+    return [for (id in MenuRegistry.instance.listEntryIds()) MenuRegistry.instance.fetchEntry(id)];
+  }
+
+  /**
+   * Here for backwards compatibility. Does not do anything though.
+   */
+  public function dump():Void {}
+
+  public function addVersion(name:String, imageKey:String, description:String, state:FlxState):Void
+  {
+    var menu:LegacyMenu = new LegacyMenu(name, imageKey, description, state);
+    MenuRegistry.instance.registerEntry(menu);
+  }
+}

@@ -1,0 +1,26 @@
+package kade.menucore.menus;
+
+import funkin.Paths;
+
+class FunkinMenu extends BaseMenu
+{
+  public function new()
+  {
+    super('funkin');
+  }
+
+  override public function getName():String
+  {
+    return 'Funkin';
+  }
+
+  override public function getDescription():String
+  {
+    return "Friday Night Funkin'";
+  }
+
+  override public function getImage():FlxGraphicAsset
+  {
+    return Paths.image('mc_base');
+  }
+}

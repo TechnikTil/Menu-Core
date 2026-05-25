@@ -1,0 +1,43 @@
+package kade.menucore.modules;
+
+import funkin.modding.module.Module;
+import funkin.ui.title.TitleState;
+import flixel.math.FlxMath;
+
+using funkin.util.AnsiUtil;
+
+class MenuCoreHandler extends Module
+{
+  var transitioning:Bool = false;
+
+  public function new()
+  {
+    super('MenuCore', FlxMath.MIN_VALUE_INT);
+    MenuRegistry.instance = new MenuRegistry();
+  }
+
+  override public function onCreate(event:ScriptEvent):Void
+  {
+    MenuRegistry.instance.loadEntries();
+
+    super.onCreate(event);
+  }
+
+  override public function onStateChangeEnd(event:StateChangeScriptEvent):Void
+  {
+    super.onStateChangeEnd(event);
+    transitioning = false;
+  }
+
+  override public function onStateChangeBegin(event:StateChangeScriptEvent):Void
+  {
+    super.onStateChangeBegin(event);
+    if (!Std.isOfType(FlxG.state, TitleState) || !FlxG.state.transitioning || transitioning) return;
+
+    trace(' MENUCORE '.bold().bg_orange() + ' User is moving to the Main Menu!');
+    event.cancel();
+    transitioning = true;
+
+    FlxG.switchState(() -> new MenuSwitchState());
+  }
+}

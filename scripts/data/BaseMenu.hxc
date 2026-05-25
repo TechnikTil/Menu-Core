@@ -1,0 +1,51 @@
+package kade.menucore.data;
+
+import funkin.ui.mainmenu.MainMenuState;
+import funkin.modding.ModStore;
+
+class BaseMenu
+{
+  public static var currentMenu(get, set):String;
+
+  static function get_currentMenu():String
+  {
+    return ModStore.get('MC_CurrentMenu');
+  }
+
+  static function set_currentMenu(value:String):String
+  {
+    ModStore.stores.set('MC_CurrentMenu', value);
+    return value;
+  }
+
+  /**
+   * The internal ID for this menu.
+   */
+  public final id:String;
+
+  public function new(ID:String)
+  {
+    id = ID;
+  }
+
+  public function getName():String
+  {
+    throw 'getName() must be overriden!';
+  }
+
+  public function getDescription():String
+  {
+    throw 'getDescription() must be overriden!';
+  }
+
+  public function getImage():FlxGraphicAsset
+  {
+    throw 'getImage() must be overriden!';
+  }
+
+  public function onSelected():Void
+  {
+    // By default, in case the custom menus come later!
+    FlxG.switchState(() -> new MainMenuState());
+  }
+}

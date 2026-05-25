@@ -1,0 +1,40 @@
+package kade.menucore.menus;
+
+import funkin.Paths;
+
+class LegacyMenu extends BaseMenu
+{
+  final name:String;
+  final imageKey:String;
+  final description:String;
+  final state:FlxState;
+
+  public function new(name:String, imageKey:String, description:String, state:FlxState)
+  {
+    super('legacy($name)');
+    this.name = name;
+    this.imageKey = imageKey;
+    this.description = description;
+    this.state = state;
+  }
+
+  override public function getName():String
+  {
+    return name;
+  }
+
+  override public function getDescription():String
+  {
+    return description;
+  }
+
+  override public function getImage():FlxGraphicAsset
+  {
+    return Paths.image(imageKey);
+  }
+
+  override public function onSelected():Void
+  {
+    FlxG.switchState(state);
+  }
+}

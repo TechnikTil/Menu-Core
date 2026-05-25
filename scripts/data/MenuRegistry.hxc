@@ -1,0 +1,106 @@
+package kade.menucore.data;
+
+import funkin.util.SortUtil;
+import haxe.ds.StringMap;
+
+using funkin.util.AnsiUtil;
+
+class MenuRegistry
+{
+  public static var instance:MenuRegistry;
+
+  var entries:StringMap<BaseMenu>;
+
+  public function new()
+  {
+    entries = new StringMap();
+  }
+
+  public function loadEntries():Void
+  {
+    var scriptedClasses:Array<String> = BaseMenu.listScriptClasses();
+    scriptedClasses.remove('kade.menucore.menus.LegacyMenu');
+
+    log(' INFO '.info() + ' Parsing ${scriptedClasses.length} scripted entries...');
+
+    for (entryCls in scriptedClasses)
+    {
+      var menu:BaseMenu = null;
+
+      try
+      {
+        menu = BaseMenu.scriptInit(entryCls, 'unknown');
+      }
+      catch(e:Exception) {}
+
+      if (menu != null)
+      {
+        registerEntry(menu);
+      }
+      else
+      {
+        log('Failed to create scripted entry (${entryCls})');
+      }
+    }
+  }
+
+  public function registerEntry(menu:BaseMenu):Void
+  {
+    entries.set(menu.id, menu);
+    log('Successfully registered entry (${menu.toString()} = ${menu.id})');
+  }
+
+  /**
+   * Retrieve a list of all entry IDs in this registry.
+   * @return The list of entry IDs.
+   */
+  public function listEntryIds():Array<String>
+  {
+    var toReturn:Array<String> = [for (i in entries.keys()) i];
+    toReturn.sort((a, b) -> SortUtil.defaultsThenAlphabetically(listBaseGameEntryIds(), a, b));
+    return toReturn;
+  }
+
+  /**
+   * Count the number of entries in this registry.
+   * @return The number of entries.
+   */
+  public function countEntries():Int
+  {
+    return listEntryIds().length;
+  }
+
+  /**
+   * Return whether the registry has successfully parsed an entry with the given ID.
+   * @param id The ID of the entry.
+   * @return `true` if the entry exists, `false` otherwise.
+   */
+  public function hasEntry(id:String):Bool
+  {
+    return entries.exists(id);
+  }
+
+  /**
+   * Fetch an entry by its ID.
+   * @param id The ID of the entry to fetch.
+   * @return The entry, or `null` if it does not exist.
+   */
+  public function fetchEntry(id:String):BaseMenu
+  {
+    return entries.get(id);
+  }
+
+  /**
+   * A list of all entries included in the base game.
+   * @return Array<String>
+   */
+  public function listBaseGameEntryIds():Array<String>
+  {
+    return ['funkin'];
+  }
+
+  static function log(message:String):Void
+  {
+    trace(' MENUCORE '.bold().bg_orange() + ' $message');
+  }
+}

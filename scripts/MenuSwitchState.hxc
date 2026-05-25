@@ -1,0 +1,207 @@
+package kade.menucore;
+
+import funkin.ui.FullScreenScaleMode;
+import funkin.graphics.FunkinSprite;
+import funkin.ui.title.TitleState;
+import funkin.group.FunkinGroup;
+import funkin.audio.FunkinSound;
+import funkin.ui.MusicBeatState;
+import funkin.util.MathUtil;
+import funkin.ui.AtlasText;
+
+#if FEATURE_TOUCH_CONTROLS
+import funkin.util.TouchUtil;
+import funkin.util.SwipeUtil;
+#end
+
+import flixel.addons.transition.FlxTransitionableState;
+import flixel.util.FlxColor;
+import flixel.math.FlxMath;
+import flixel.text.FlxText;
+
+class MenuSwitchState extends MusicBeatState
+{
+  var menuItems:Array<String>;
+  var menuGroup:FunkinGroup;
+  var curSelected:Int = 0;
+
+  var arrowLeft:FunkinSprite;
+  var arrowRight:FunkinSprite;
+
+  var topRightText:FlxText;
+  var nameText:AtlasText;
+
+  override public function create():Void
+  {
+    menuItems = MenuRegistry.instance.listEntryIds();
+    curSelected = Math.max(menuItems.indexOf(BaseMenu.currentMenu), 0);
+
+    FunkinSound.playMusic('menu-switch', {
+      startingVolume: 0.0,
+      overrideExisting: true,
+      restartTrack: false
+    });
+    FlxG.sound.music.fadeIn(3);
+
+    FlxTransitionableState.skipNextTransIn = true;
+    FlxTransitionableState.skipNextTransOut = true;
+
+    var bg:FunkinSprite = FunkinSprite.create(0, 0, 'mc_bg');
+    bg.setGraphicSize(Std.int(FlxG.width * 1.2));
+    bg.updateHitbox();
+    bg.screenCenter();
+    bg.zIndex = 0;
+    add(bg);
+
+    var chooseBlackBar:FunkinSprite = new FunkinSprite(0, 0);
+    chooseBlackBar.makeSolidColor(FlxG.width, 60, FlxColor.BLACK);
+    chooseBlackBar.zIndex = 10;
+    add(chooseBlackBar);
+
+    var blackBar:FunkinSprite = new FunkinSprite(0, 0);
+    blackBar.makeSolidColor(FlxG.width, 185, FlxColor.BLACK);
+    blackBar.screenCenter(0x10);
+    blackBar.zIndex = 10;
+    add(blackBar);
+
+    topRightText = new FlxText(0, 15, FlxG.width / 2, "WEED");
+    topRightText.setFormat(Paths.font("vcr.ttf"), 35, FlxColor.WHITE, "right");
+    topRightText.x = (FlxG.width - topRightText.width) - 6;
+    topRightText.zIndex = 20;
+    add(topRightText);
+
+    final textX:Float = Math.max(6, FullScreenScaleMode.gameNotchSize.x);
+    var choose:FlxText = new FlxText(textX, 2, FlxG.width, "CHOOSE THE VERSION");
+    choose.setFormat(Paths.font("vcr.ttf"), 55, FlxColor.WHITE);
+    choose.zIndex = 20;
+    add(choose);
+
+    menuGroup = new FunkinGroup(0, 0, 0, false, false);
+    menuGroup.scale.set(0.8, 0.8);
+    menuGroup.zIndex = 30;
+    add(menuGroup);
+
+    nameText = new AtlasText(0, 0, 'cock', 'bold');
+    nameText.x = (FlxG.width - nameText.getWidth()) / 2;
+    nameText.y = FlxG.height - nameText.height - 25;
+    nameText.zIndex = 40;
+    add(nameText);
+
+    arrowLeft = FunkinSprite.createSparrow(FlxG.width / 8, 0, 'freeplay/freeplaySelector/freeplaySelector');
+    arrowLeft.animation.addByPrefix('shine', 'arrow pointer loop', 24);
+    arrowLeft.animation.play('shine');
+    arrowLeft.x -= arrowLeft.width / 2;
+    arrowLeft.screenCenter(0x10);
+    arrowLeft.zIndex = 50;
+    add(arrowLeft);
+
+    arrowRight = FunkinSprite.createSparrow(FlxG.width - (FlxG.width / 8), 0, 'freeplay/freeplaySelector/freeplaySelector');
+    arrowRight.animation.addByPrefix('shine', 'arrow pointer loop', 24);
+    arrowRight.animation.play('shine');
+    arrowRight.x -= arrowRight.width / 2;
+    arrowRight.screenCenter(0x10);
+    arrowRight.flipX = true;
+    arrowRight.zIndex = 50;
+    add(arrowRight);
+
+    super.create();
+
+    #if FEATURE_TOUCH_CONTROLS
+    addBackButton(FlxG.width - 230, FlxG.height - 200, FlxColor.WHITE, () -> back(), 0.3);
+    #end
+
+    populateMenuItems();
+
+    changeSelection(0);
+    menuGroup.x = menuGroup.localX;
+  }
+
+  function populateMenuItems():Void
+  {
+    for (i in 0...menuItems.length)
+    {
+      var menu:BaseMenu = MenuRegistry.instance.fetchEntry(menuItems[i]);
+
+      var sprite:FunkinSprite = new FunkinSprite(0, 0);
+      sprite.loadGraphic(menu.getImage());
+      sprite.updateHitbox();
+
+      sprite.localX = (FlxG.width - sprite.width) / 2;
+      sprite.localY = (FlxG.height - sprite.height) / 2;
+      sprite.localX += FlxG.width * i;
+
+      menuGroup.add(sprite);
+    }
+  }
+
+  override public function update(elapsed:Float):Void
+  {
+    var leftP:Bool = controls.UI_LEFT_P;
+    var rightP:Bool = controls.UI_RIGHT_P;
+    var acceptP:Bool = controls.ACCEPT_P;
+    var backP:Bool = controls.BACK_P;
+
+    #if FEATURE_TOUCH_CONTROLS
+    if (TouchUtil.pressAction(arrowLeft) || SwipeUtil.justSwipedLeft)
+    {
+      leftP = true;
+    }
+    else if (TouchUtil.pressAction(arrowRight) || SwipeUtil.justSwipedRight)
+    {
+      rightP = true;
+    }
+    else if (TouchUtil.pressAction(menuGroup.getChildAt(curSelected)))
+    {
+      acceptP = true;
+    }
+    #end
+
+    if (leftP)
+    {
+      changeSelection(-1);
+    }
+    else if (rightP)
+    {
+      changeSelection(1);
+    }
+    else if (acceptP)
+    {
+      select();
+    }
+    else if (backP)
+    {
+      back();
+    }
+
+    menuGroup.x = MathUtil.smoothLerpPrecision(menuGroup.x, menuGroup.localX, elapsed, 0.307);
+    super.update(elapsed);
+  }
+
+  public function changeSelection(change:Int = 0):Void
+  {
+    curSelected = FlxMath.wrap(curSelected + change, 0, menuItems.length - 1);
+    menuGroup.localX = -FlxG.width * curSelected;
+
+    if (change != 0) FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+
+    var menu:BaseMenu = MenuRegistry.instance.fetchEntry(menuItems[curSelected]);
+
+    nameText.text = menu.getName();
+    nameText.x = (FlxG.width - nameText.getWidth()) / 2;
+
+    topRightText.text = menu.getDescription();
+  }
+
+  public function select():Void
+  {
+    var menu:BaseMenu = MenuRegistry.instance.fetchEntry(menuItems[curSelected]);
+    menu.onSelected();
+
+    BaseMenu.currentMenu = menu.id;
+  }
+
+  public function back():Void
+  {
+    FlxG.switchState(() -> new TitleState());
+  }
+}
